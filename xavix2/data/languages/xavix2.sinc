@@ -1,0 +1,955 @@
+# sleigh include file for Skeleton language instructions
+
+define endian=little;
+define alignment=1;
+
+define space rom	 type=ram_space		size=4 default;
+define space ram     type=ram_space     size=4;
+define space io      type=ram_space     size=4;
+
+# define space io      type=ram_space      size=2;
+define space register type=register_space size=4;
+
+define register offset=0x00 size=4 [ r0 r1 r2 r3 r4 r5 sp lr ];
+define register offset=0x100 size=4 [ h00 h01 h02 h03 h04 h05 h06 h07 h08 h09
+									  h10 h11 h12 h13 h14 h15 h16 h17 h18 h19
+									  h20 h21 h22 h23 h24 h25 h26 h27 h28 h29
+									  h30 h31 h32 h33 h34 h35 h36 h37 h38 h39
+									  h40 h41 h42 h43 h44 h45 h46 h47 h48 h49
+									  h50 h51 h52 h53 h54 h55 h56 h57 h58 h59
+									  h60 h61 h62 h63 ];
+#define register offset=0x00 size=1 [ r0b _ _ _ r1b _ _ _ r2b _ _ _ r3b _ _ _ r4b _ _ _ r5b _ _ _ spb _ _ _ lrb _ _ _ ];
+define register offset=0x20 size=4 [ F ];
+define register offset=0x30 size=4 [ segment ];
+
+
+# Define context bits (if defined, size must be multiple of 4-bytes)
+define register offset=0xf0 size=8   contextreg;
+
+define context contextreg
+#  assume8bitIOSpace		= (0,0)
+	mvophi 	= (0,0) noflow
+	mvoplo  = (1,2) noflow
+	mvamt 	= (3,34) noflow
+;
+
+# Flag bits (?? manual is very confusing - could be typos!)
+@define C_flag "F[0,1]"		# C: Carry
+@define V_flag "F[1,1]"		# V: Add/Subtract
+@define Z_flag "F[2,1]"		# Z: Zero
+@define N_flag "F[3,1]"		# N: Sign
+@define I_flag "F[4,1]"		# I: Interrupt
+
+define token opbyte (8)
+   op0_8     = (0,7)
+   op6_2     = (6,7)
+   
+   dRegPair4_2    = (4,5)
+   pRegPair4_2    = (4,5)
+   sRegPair4_2    = (4,5)
+   qRegPair4_2    = (4,5)
+   qRegPair4_2a   = (4,5)
+   qRegPair4_2b   = (4,5)
+   rRegPair4_2    = (4,5)
+
+   reg3_3 = (3,5)
+   bits3_3   = (3,5)
+   
+   bits0_4   = (0,3)
+   
+   reg0_3 = (0,2)
+   bits0_3   = (0,2)
+;
+
+#define token data8 (8)
+#   imm8		= (0,7)
+#   sign8	= (7,7)
+#   simm8	= (0,7) signed
+#;
+#
+#define token data16 (16)
+#   timm4        = (12,15)
+#   imm16        = (0,15)
+#   sign16		= (15,15)
+#   simm16		= (0,15) signed
+#;
+
+define token inst8 (8)
+	op1_4 = (4,7)
+	cc_4  = (0,3)
+	op1_8 = (0,7)
+;
+
+define token inst16 (16)
+	op2_3 = (5,7)
+	op2_4 = (4,7)
+	op2_7 = (1,7)
+	op2_8 = (0,7)
+	rd_hi = (0,0)
+	rd_lo = (14,15)
+	rd_l2 = (14,15)
+	rs    = (11,13)
+	rs_hi = (13,13)
+	rs_lo = (11,12)
+	rt    = (8,10)
+	rh    = (8,13)
+	imm6  = (8,13)
+	imm6s = (8,13) signed
+	imm5  = (8,12)
+	imm3  = (8,10)
+	imm3s = (8,10) signed
+	i3_hi = (10,10)
+	i3_lo = (8,9)
+;
+
+define token d8 (8)
+	imm8 = (0,7)
+	imm8s = (0,7) signed
+;
+
+define token d16 (16)
+	imm16_lo = (8,15)
+	imm16_hi = (0,7)
+	imm16s_hi = (0,7) signed
+;
+
+define token i22 (32)
+	op4_8 = (24,31)
+	op4_7 = (25,31)
+	imm22 = (0,31)
+;
+
+attach variables [ rs rt ] [ r0 r1 r2 r3 r4 r5 sp lr ];
+attach variables [ rd_lo ] [ r0 r1 r2 r3 ];
+attach variables [ rd_l2 ] [ r4 r5 sp lr ];
+attach variables [ rh ] [ h00 h01 h02 h03 h04 h05 h06 h07 h08 h09
+					      h10 h11 h12 h13 h14 h15 h16 h17 h18 h19
+					      h20 h21 h22 h23 h24 h25 h26 h27 h28 h29
+					      h30 h31 h32 h33 h34 h35 h36 h37 h38 h39
+					      h40 h41 h42 h43 h44 h45 h46 h47 h48 h49
+					      h50 h51 h52 h53 h54 h55 h56 h57 h58 h59
+					      h60 h61 h62 h63 ];
+#attach variables [ rdb ] [ r0b r1b r2b r3b r4b r5b spb lrb ];
+#
+#attach variables [ sRegPair4_2 dRegPair4_2 ] [ BC DE HL SP ];
+#
+#attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
+#attach variables [ qRegPair4_2a ] [ B D H A ];
+#attach variables [ qRegPair4_2b ] [ C E L F ];
+#
+#attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
+#attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
+
+################################################################
+# Macros
+################################################################
+
+macro setResultFlags(result) {
+	$(Z_flag) = (result == 0);
+	$(N_flag) = (result s< 0);
+}
+
+macro setAddFlags(op1, op2) {
+	local result = op1 + op2;
+	$(Z_flag) = (result == 0);
+	$(N_flag) = (result s< 0);
+	$(C_flag) = carry(op1, op2);
+	$(V_flag) = scarry(op1, op2);
+}
+
+macro setSubFlags(op1, op2) {
+	$(C_flag) = op1 < op2;
+	$(V_flag) = sborrow(op1, op2);
+}
+
+#macro push16(val16) {
+#	SP = SP - 2;
+#	*:2 SP = val16; 
+#}
+#
+#macro pop16(ret16) {
+#	ret16 = *:2 SP;
+#	SP = SP + 2; 
+#}
+#
+#macro push8(val8) {
+#	SP = SP - 1;
+#	ptr:2 = SP;
+#	*:1 ptr = val8; 
+#}
+#
+#macro pop8(ret8) {
+#    ptr:2 = SP;
+#	ret8 = *:1 ptr;
+#	SP = SP + 1; 
+#}
+
+################################################################
+
+#ixMem8: (IX+simm8)  is IX & simm8								{ ptr:2 = IX + simm8; export *:1 ptr; }
+#ixMem8: (IX-val)    is IX & simm8 & sign8=1	[ val = -simm8; ]	{ ptr:2 = IX + simm8; export *:1 ptr; }
+#
+#iyMem8: (IY+simm8)  is IY & simm8								{ ptr:2 = IY + simm8; export *:1 ptr; }
+#iyMem8: (IY-val)    is IY & simm8 & sign8=1	[ val = -simm8; ]	{ ptr:2 = IY + simm8; export *:1 ptr; }
+#
+#Addr16: imm16		is imm16									{ export *:1 imm16; }
+#
+#Mem16: (imm16)		is imm16									{ export *:2 imm16; }
+#
+#RelAddr8: loc		is simm8  [ loc = inst_next + simm8; ]		{ export *:1 loc; }
+mvh: loc32			is op2_3=0 & rd_hi & rd_lo & imm6; imm16_hi & imm16_lo [ loc32 = (imm6 << 26) + (imm16_hi << 18) + (imm16_lo << 10);
+	mvophi = rd_hi; globalset(inst_next,mvophi);
+	mvoplo = rd_lo; globalset(inst_next,mvoplo); 
+	mvamt = loc32; globalset(inst_next,mvamt); 
+] { export *[const]:4 loc32; }
+mvh: loc32			is op2_3=1 & rd_hi & rd_lo & imm6; imm8 [ loc32 = (imm6 << 26) + (imm8 << 18);
+	mvophi = rd_hi; globalset(inst_next,mvophi);
+	mvoplo = rd_lo; globalset(inst_next,mvoplo); 
+	mvamt = loc32; globalset(inst_next,mvamt); ] { export *[const]:4 loc32; }
+rd: rd_lo			is rd_hi=0 & rd_lo { export rd_lo; }
+rd:	rd_l2			is rd_hi=1 & rd_l2 { export rd_l2; }
+#imm16: loc			is imm16_hi & imm16_lo [ loc = ((imm16_hi << 8) | imm16_lo); ] { export loc; }
+#imm16s:	loc			is imm16s_hi & imm16_lo [ loc = imm16s_hi << 8 | imm16_lo; ] { export loc; }
+Imm: imm6		    is op2_3=6 & imm6 { tmp:4 = imm6; export tmp; }
+Imm: imm6		    is op2_3=5 & imm6 { tmp:4 = imm6; export tmp; }
+Imm: imm6		    is op2_3=4 & imm6 { tmp:4 = imm6; export tmp; }
+Imm: imm6		    is op2_3=3 & imm6 { tmp:4 = imm6; export tmp; }
+Imms: imm6s		    is op2_3=3 & imm6s { export *[const]:4 imm6s; }
+Imms: loc32		    is op2_3=2 & imm6s; imm8                [ loc32 = (imm6s << 8) + imm8; ]                          { export *[const]:4 loc32; }
+Imms: loc32		    is op2_3=1 & imm6s; imm8                [ loc32 = (imm6s << 8) + imm8; ]                          { export *[const]:4 loc32; }
+Imms: loc32		    is op2_3=0 & imm3s; imm16_hi & imm16_lo [ loc32 = (imm3s << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[const]:4 loc32; }
+#Imm: loc32		    is op2_3=3 & imm6         [ loc32 = (imm6 & 0x3F << 0);          ]	{ export loc32; }
+Imm: loc32		    is op2_3=2 & imm6; imm8   [ loc32 = (imm6 << 8) + imm8;   ]	{ tmp:4 = loc32; export tmp; }
+Imm: loc32		    is op2_3=1 & imm3; imm8   [ loc32 = (imm3 << 8) + imm8;   ]	{ tmp:4 = loc32; export tmp; }
+Imm: loc32		    is op2_3=0 & imm3; imm16_hi & imm16_lo  [ loc32 = (imm3 << 16) + ((imm16_hi << 8) | imm16_lo); ]	{ export *[const]:4 loc32; }
+#Imm14: loc32	  	is op2_3=1 & imm6; imm8   [ loc32 = (imm6 << 8) + imm8;   ]	{ tmp:4 = loc32; export tmp; }
+#Imm32: loc32	 	is op2_3=0 & rs>=4 & mvamt & imm3; imm16_hi & imm16_lo [ loc32 = mvamt + (imm3 << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[rom]:4 loc32; }
+Imm32: loc32	 	is op2_3=0 & mvamt & imm3; imm16_hi & imm16_lo [ loc32 = mvamt + (imm3 << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[const]:4 loc32; }
+Imm32: loc32	 	is op2_3=1 & mvamt & imm3; imm8 [ loc32 = mvamt + (imm3 << 8) + imm8; ] { export *[const]:4 loc32; }
+#Imm32b: Imm32	 	is Imm32 { export Imm32; }
+#Imm32b: Imm			is mvamt & Imm   { tmp:4 = mvamt + Imm; export tmp; }
+addr32: [imm32]		is op2_3=0 & imm3; imm16_hi & imm16_lo [imm32 = (imm3 << 16) + ((imm16_hi << 8) | imm16_lo); ] { export *[const]:4 imm32; }
+addr32: [imm32]		is op2_3=2 & imm6; imm8 [imm32 = (imm6 << 8) + imm8; ] { export *[const]:4 imm32; }
+Addr8: addr32^".b"  is addr32                    	{ export *:1 addr32; }
+Addr16: addr32^".w" is addr32                    	{ export *:2 addr32; }
+Addr32: addr32^".d" is addr32                    	{ export *:4 addr32; }
+#Addr16: Imm		    is Imm                    	{ export *:2 Imm; }
+Addr: reloc		    is op2_3=2 & rs>=4 & imm3; imm8 [reloc = (imm3 << 8) + imm8; ] { export *[const]:4 reloc; }
+Addr: reloc		    is op2_3=2 & imm3; imm8 [reloc = (imm3 << 8) + imm8; ] { export *[ram]:4 reloc; }
+#Addr: reloc		    is op2_3=1 & imm6; imm8 [reloc = (imm6 << 8) + imm8; ]              	{ export *[ram]:2 reloc; }
+RelAddr: reloc		is imm8s [ reloc = inst_start + imm8s; ]            { export *[rom]:1 reloc; }
+RelAddr16: reloc	is imm16s_hi & imm16_lo [ reloc = segment + inst_start + ((imm16s_hi << 8) | imm16_lo); ]                   	{ export *[rom]:1 reloc; }
+RelAddr22: reloc	is imm6; imm16_hi & imm16_lo [reloc = segment + (imm6 << 16) + ((imm16_hi << 8) | imm16_lo); ]              	{ export  *:4 reloc; }
+RelAddr32: rs		is rs              	{ export *[ram]:4 rs; }
+RelAddr32R:rs   	is rs             	{ export *[rom]:4 rs; }
+
+#1x
+Addr: reloc		    is op2_3=0 & imm3s; imm16_hi & imm16_lo [reloc = (imm3s << 16) + ((imm16_hi << 8) | imm16_lo); ]              	{ export *[ram]:4 reloc; }
+#Imms19b: [rs+loc32]^".b"      is rs & i3_hi=0 & i3_lo; imm16_hi & imm16_lo [ loc32 = (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[ram]:1 loc32; }
+#Imms19w: [rs+loc32]^".w"      is rs & i3_hi=0 & i3_lo; imm16_hi & imm16_lo [ loc32 = (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[ram]:2 loc32; }
+#Imms19d: [rs+loc32]^".d"      is rs & i3_hi=0 & i3_lo; imm16_hi & imm16_lo [ loc32 = (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[ram]:4 loc32; }
+#Imms19b: [rs+loc32]^".b"      is rs & i3_hi=1 & i3_lo; imm16_hi & imm16_lo [ loc32 = 0xFFFC0000 + (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[io]:1 loc32; }
+#Imms19w: [rs+loc32]^".w"      is rs & i3_hi=1 & i3_lo; imm16_hi & imm16_lo [ loc32 = 0xFFFC0000 + (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[io]:2 loc32; }
+#Imms19d: [rs+loc32]^".d"      is rs & i3_hi=1 & i3_lo; imm16_hi & imm16_lo [ loc32 = 0xFFFC0000 + (i3_lo << 16) + (imm16_hi << 8) + imm16_lo; ] { export *[io]:4 loc32; }
+
+#4x
+Imm11: loc32	    is op2_3=2 & imm3s; imm8   [ loc32 = (imm3s << 8) + imm8;   ]	{ export *[const]:4 loc32; }
+
+#5x
+Imms14b: [loc32]^".b"      is rs_hi=0 & imm5; imm8 [ loc32 = (imm5 << 8) + imm8; ] { export *[ram]:1 loc32; }
+Imms14w: [loc32]^".w"      is rs_hi=0 & imm5; imm8 [ loc32 = (imm5 << 8) + imm8; ] { export *[ram]:2 loc32; }
+Imms14d: [loc32]^".d"      is rs_hi=0 & imm5; imm8 [ loc32 = (imm5 << 8) + imm8; ] { export *[ram]:4 loc32; }
+Imms14b: [loc32]^".b"      is rs_hi=1 & imm5; imm8 [ loc32 = 0xFFFFE000 + (imm5 << 8) + imm8; ] { export *[io]:1 loc32; }
+Imms14w: [loc32]^".w"      is rs_hi=1 & imm5; imm8 [ loc32 = 0xFFFFE000 + (imm5 << 8) + imm8; ] { export *[io]:2 loc32; }
+Imms14d: [loc32]^".d"      is rs_hi=1 & imm5; imm8 [ loc32 = 0xFFFFE000 + (imm5 << 8) + imm8; ] { export *[io]:4 loc32; }
+
+#
+cc: "VS"            is cc_4=0x0   { c:1 = $(V_flag); export c; }                                    # 
+cc: "LO"            is cc_4=0x1   { c:1 = $(C_flag); export c; }                                    # a u< b
+cc: "EQ"            is cc_4=0x2   { c:1 = $(Z_flag); export c; }                                    #* a == b
+cc: "LS"            is cc_4=0x3   { c:1 = ($(C_flag) || $(Z_flag)); export c; }                     #* a u<= b
+cc: "MI"            is cc_4=0x4   { c:1 = $(N_flag); export c; }                                    # r-
+cc: "AL"            is cc_4=0x5   { c:1 = 1; export c; }                                            #* 1
+cc: "LT"            is cc_4=0x6   { c:1 = ($(N_flag) != $(V_flag)); export c; }                     # a s< b
+cc: "LE"            is cc_4=0x7   { c:1 = ($(Z_flag) || $(N_flag) != $(V_flag)); export c; }        # a s<= b
+cc: "VC"            is cc_4=0x8   { c:1 = ($(V_flag) == 0); export c; }                             # 
+cc: "HS"            is cc_4=0x9   { c:1 = ($(C_flag) == 0); export c; }                             # a u>= b
+cc: "NE"            is cc_4=0xa   { c:1 = ($(Z_flag) == 0); export c; }                             # a != b
+cc: "HI"            is cc_4=0xb   { c:1 = (($(C_flag) == 0) && ($(Z_flag) == 0)); export c; }       #* a u> b
+cc: "PL"            is cc_4=0xc   { c:1 = ($(N_flag) == 0); export c; }                             # r+=
+cc: "NV"            is cc_4=0xd   { c:1 = 0; export c; }                                            #* 0
+cc: "GE"            is cc_4=0xe   { c:1 = ($(N_flag) == $(V_flag)); export c; }                     # a s>= b
+cc: "GT"            is cc_4=0xf   { c:1 = (($(Z_flag) == 0) && $(N_flag) == $(V_flag)); export c; } # a s> b
+
+ss:                 is op2_7=0x54 { s:4 = (segment >> 30); export s; }
+
+#
+#cc2: "NZ"            is bits3_3=0x4                              { c:1 = ($(Z_flag) == 0); export c; }
+#cc2: "Z"             is bits3_3=0x5                              { c:1 = $(Z_flag); export c; }
+#cc2: "NC"            is bits3_3=0x6                              { c:1 = ($(C_flag) == 0); export c; }
+#cc2: "C"             is bits3_3=0x7                              { c:1 = $(C_flag); export c; }
+
+################################################################
+
+
+#:LD IX,Mem16  is op0_8=0xdd & IX; op0_8=0x2a; Mem16 {
+#	IX = Mem16;
+#}
+#
+#:LD IY,Mem16  is op0_8=0xfd & IY; op0_8=0x2a; Mem16 {
+#	IY = Mem16;
+#}
+#
+#:LD Mem16,HL  is op0_8=0x22 & HL; Mem16 {
+#	Mem16 = HL;
+#}
+#
+#:LD Mem16,dRegPair4_2  is op0_8=0xed; op6_2=0x1 & dRegPair4_2 & bits0_4=0x3; Mem16 {
+#	Mem16 = dRegPair4_2;
+#}
+#
+#:LD Mem16,IX  is op0_8=0xdd & IX; op0_8=0x22; Mem16 {
+#	Mem16 = IX;
+#}
+#
+#:LD Mem16,IY  is op0_8=0xfd & IY; op0_8=0x22; Mem16 {
+#	Mem16 = IY;
+#}
+#
+#:NEG  is op0_8=0xed; op0_8=0x44 {
+#	$(PV_flag) = (A == 0x80);
+#	$(C_flag) = (A != 0);
+#	A = -A;
+#	setResultFlags(A);
+#}
+#
+#:SET bits3_3,ixMem8  is op0_8=0xdd; op0_8=0xcb; ixMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+#	mask:1 = (1 << bits3_3);
+#	val:1 = ixMem8;
+#	ixMem8 = val | mask;
+#}
+#
+#:SET bits3_3,iyMem8  is op0_8=0xfd; op0_8=0xcb; iyMem8; op6_2=0x3 & bits3_3 & bits0_3=0x6 {
+#	mask:1 = (1 << bits3_3);
+#	val:1 = iyMem8;
+#	iyMem8 = val | mask;
+#}
+#
+#:JP Addr16  is op0_8=0xc3; Addr16 {
+#	goto Addr16;	
+#}
+#
+#:JP cc,Addr16  is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
+#	if (!cc) goto Addr16;
+#}
+#
+#:JR RelAddr8  is op0_8=0x18; RelAddr8 {
+#	goto RelAddr8;
+#}
+
+#:JR cc2,RelAddr8  is op6_2=0x0 & cc2 & bits0_3=0x0; RelAddr8 {
+#	if (cc2) goto RelAddr8;
+#}
+#
+
+#00
+:ADD rd,rs,Imms is ((op2_7=0x0) & rd & rs) ... & Imms {
+	rd = rs + Imms;
+}
+
+#04
+:SUB rd,rs,Imms is ((op2_7=0x2) & rd & rs) ... & Imms {
+	setSubFlags(rs, Imms);
+	rd = rs - Imms;
+	setResultFlags(rd);
+}
+
+#06
+:MOV rd,Imms is (op2_7=0x3 & rd) ... & Imms {
+	rd = sext(Imms);
+}
+
+#08
+:JMP RelAddr22 is op2_8=8 ... & RelAddr22 {
+	goto RelAddr22; 
+}
+
+#09
+:CALL RelAddr22 is op2_8=9 ... & RelAddr22 {
+	lr = inst_next;
+	call  RelAddr22;
+}
+
+#0A
+:AND rd,rs,Imm is (op2_7=0x5 & rd & rs) ... & Imm {
+	rd = rs & Imm;
+}
+
+#0C
+:OR rd,rs,Imm32 is (op2_7=0x6 & rd & rs) ... & Imm32 {
+	rd = rs | Imm32;
+}
+
+#0E
+:XOR rd,rs,Imm is (op2_7=0x7 & rd & rs) ... & Imm {
+	rd = rs ^ Imm;
+}
+
+#10
+:MOV rd,[rs+Addr]".b" is (op2_7=0x08 & rd & rs) ... & Addr {
+	rd = sext(rs+Addr);
+}
+
+#12
+:MOV rd,[rs+Addr]".b" is (op2_7=0x09 & rd & rs) ... & Addr {
+	rd = zext(rs+Addr);
+}
+
+#14
+:MOV rd,[rs+Addr]".w" is (op2_7=0x0a & rd & rs) ... & Addr {
+	rd = zext(*:2 (rs+Addr));
+}
+
+#16
+:MOV rd,[rs+Addr]".w" is (op2_7=0x0b & rd & rs) ... & Addr {
+	rd = zext(*:2 (rs+Addr));
+}
+
+#18
+:MOV rd,[rs+Addr]".d" is (op2_7=0x0c & rd & rs) ... & Addr {
+	rd = *:4 (rs+Addr);
+}
+
+#1A
+:MOV [rs+Addr]".b",rd is (op2_7=0x0d & rd & rs) ... & Addr {
+	*:1 (rs+Addr) = rd:1;
+}
+
+#1C
+:MOV [rs+Addr]".w",rd is (op2_7=0x0e & rd & rs) ... & Addr {
+	*:2 (rs+Addr) = rd:2;
+}
+
+#1E
+:MOV [rs+Addr]".d",rd is (op2_7=0x0f & rd & rs) ... & Addr {
+	*:4 (rs+Addr) = rd;
+}
+
+#20
+:ADD rd,rs,Imm is ((op2_7=0x10) & rd & rs) ... & Imm {
+	rd = rs + Imm;
+	setResultFlags(rd);
+}
+
+#22
+:MVH rd,mvh is ((op2_7=0x1 | op2_7=0x11) & rd) ... & mvh {
+#	build mvh;
+	rd = mvh;
+}
+
+#24
+:SUB rd,rs,Imm is (op2_7=0x12 & rd & rs) ... & Imm {
+	setSubFlags(rs, Imm);
+	rd = rs - Imm;
+	setResultFlags(rd);
+}
+
+#26
+:CMP rd,Imm is (op2_7=0x13 & rd) ... & Imm {
+	setSubFlags(rd, Imm);
+	local tmp = rd - Imm;
+	setResultFlags(tmp);
+}
+
+#28
+:JMP RelAddr16 is op1_8=0x28; RelAddr16 {
+#	local addr=zext(imm22);
+	goto RelAddr16;
+}
+
+#2A
+:AND rd,rs,Imm is (op2_7=0x15 & rd & rs) ... & Imm {
+	rd = rs & Imm;
+	setResultFlags(rd);
+}
+
+#2C
+:OR rd,rs,Imm32 is (op2_7=0x16 & rd & rs) ... & Imm32 {
+	rd = rs | Imm32;
+	setResultFlags(rd);
+}
+
+#2E
+:XOR rd,rs,Imm is (op2_7=0x17 & rd & rs) ... & Imm {
+	rd = rs ^ Imm;
+	setResultFlags(rd);
+}
+
+#40
+:MOV rd,[rs+Imm11]".b" is (op2_7=0x20 & rd & rs) ... & Imm11 {
+	rd = sext(*:1 (rs+Imm11));
+}
+
+#42
+:MOV rd,[rs+Imm11]".b" is (op2_7=0x21 & rd & rs) ... & Imm11 {
+	rd = zext(*:1 (rs+Imm11));
+}
+
+#44
+:MOV rd,[rs+Imm11]".w" is (op2_7=0x22 & rd & rs) ... & Imm11 {
+	rd = zext(*:2 (rs+Imm11));
+}
+
+#46
+:MOV rd,[rs+Imm11]".w" is (op2_7=0x23 & rd & rs) ... & Imm11 {
+	rd = zext(*:2 (rs+Imm11));
+}
+
+#48
+:MOV rd,[rs+Imm11]".d" is (op2_7=0x24 & rd & rs) ... & Imm11 {
+	rd = *:4 (rs+Imm11);
+}
+
+#4A
+:MOV [rs+Imm11]".b",rd is (op2_7=0x25 & rd & rs) ... & Imm11 {
+	*[ram]:1 (rs+Imm11) = rd:1;
+}
+
+#4C
+:MOV [rs+Imm11]".w",rd is (op2_7=0x26 & rd & rs) ... & Imm11 {
+	*[ram]:2 (rs+Imm11) = rd:2;
+}
+
+#4E
+:MOV [rs+Imm11]".d",rd is (op2_7=0x27 & rd & rs) ... & Imm11 {
+	*[ram]:4 (rs+Imm11) = rd;
+}
+
+#50
+:MOV rd,Imms14b is ((op2_7=0x28) & rd) ... & Imms14b {
+	rd = sext(Imms14b);
+}
+
+#52
+:MOV rd,Imms14b is ((op2_7=0x29) & rd) ... & Imms14b {
+	rd = zext(Imms14b);
+}
+
+#54
+:MOV rd,Imms14w is ((op2_7=0x2a) & rd) ... & Imms14w {
+	rd = zext(Imms14w);
+}
+
+#56
+:MOV rd,Imms14w is ((op2_7=0x2b) & rd) ... & Imms14w {
+	rd = sext(Imms14w);
+}
+
+#58
+:MOV rd,Imms14d is ((op2_7=0x2c) & rd) ... & Imms14d {
+	rd = Imms14d;
+}
+
+#5A
+:MOV Imms14b,rd is ((op2_7=0x2d) & rd) ... & Imms14b {
+	Imms14b = rd:1;
+}
+
+#5C
+:MOV Imms14w,rd is ((op2_7=0x2e) & rd) ... & Imms14w {
+	Imms14w = rd:2;
+}
+
+#5E
+:MOV Imms14d,rd is ((op2_7=0x2f) & rd) ... & Imms14d {
+	Imms14d = rd;
+}
+
+#60
+:ADD rd,Imms is ((op2_7=0x30) & rd) ... & Imms {
+	rd = rd + sext(Imms);
+}
+
+#06,62
+:MOV rd,Imms is ((op2_7=0x31) & rd) ... & Imms {
+	rd = sext(Imms);
+}
+
+#64
+:SUB rd,Imms is (op2_7=0x32 & rd) ... & Imms {
+	setSubFlags(rd, sext(Imms));
+	rd = rd - sext(Imms);
+	setResultFlags(rd);
+}
+
+#66
+:CMP rd,Imms is (op2_7=0x33 & rd) ... & Imms {
+	setSubFlags(rd, Imms);
+	local tmp = rd - Imms;
+	setResultFlags(tmp);
+}
+
+#6A
+:"?SR" rd,rs,imm3 is op2_7=0x35 & rd & rs & imm3 {
+	rd = rs >> imm3;
+}
+
+#6C
+:"?SR" rd,rs,imm3 is op2_7=0x36 & rd & rs & imm3 {
+	rd = rs >> imm3;
+}
+
+#6E
+:LSL rd,rs,imm3 is op2_7=0x37 & rd & rs & imm3 {
+	rd = rs << imm3;
+}
+
+#70
+:MOV rd,[sp+Imms] is ((op2_7=0x18 | op2_7=0x38) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	rd = sext(*[ram]:1 ptr);
+}
+
+#72
+:MOV rd,[sp+Imms] is ((op2_7=0x19 | op2_7=0x39) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	rd = zext(*[ram]:1 ptr);
+}
+
+#74
+:MOV rd,[sp+Imms] is ((op2_7=0x1a | op2_7=0x3a) & rd & sp) ... & Imms {
+	ptr :4 = sp + sext(Imms);
+	rd = zext(*[ram]:2 ptr);
+}
+
+#76
+:MOV rd,[sp+Imms] is ((op2_7=0x1b | op2_7=0x3b) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	rd = sext(*[ram]:2 ptr);
+}
+
+#78
+:MOV rd,[sp+Imms] is ((op2_7=0x1c | op2_7=0x3c) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	rd = *[ram]ptr;
+}
+
+#7A
+:MOV [sp+Imms],rd is ((op2_7=0x1d | op2_7=0x3d) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	*[ram]:1 ptr = rd:1;
+}
+
+#7C
+:MOV [sp+Imms],rd is ((op2_7=0x1e | op2_7=0x3e) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	*[ram]:2 ptr = rd:2;
+}
+
+#7E
+:MOV [sp+Imms],rd is ((op2_7=0x1f | op2_7=0x3f) & rd & sp) ... & Imms {
+	ptr:4 = sp + sext(Imms);
+	*[ram]ptr = rd;
+}
+
+#80
+:ADD rd,rs,rt is op2_7=0x40 & rd & rs & rt {
+	rd = rs + rt;	
+}
+
+#82
+:??? rd,rs,rt is op2_7=0x41 & rd & rs & rt {
+#	rd = rs + rt;	
+}
+
+#84
+:SUB rd,rs,rt is op2_7=0x42 & rd & rs & rt {
+	rd = rs - rt;	
+}
+
+#86
+:??? rd,rs,rt is op2_7=0x43 & rd & rs & rt {
+#	rd = rs + rt;	
+}
+
+#88
+:JMP rs is op2_7=0x44 & rs {
+	segment = zext(rs) & 0xffc00000;
+	goto [rs];
+}
+
+#8A
+:AND rd,rs,rt is op2_7=0x45 & rd & rs & rt {
+	rd = rs & rt;
+	setResultFlags(rd);
+}
+
+#8C
+:OR rd,rs,rt is op2_7=0x46 & rd & rs & rt {
+	rd = rs | rt;	
+	setResultFlags(rd);
+}
+
+#8E
+:XOR rd,rs,rt is op2_7=0x47 & rd & rs & rt {
+	rd = rs ^ rt;	
+	setResultFlags(rd);
+}
+
+#90
+:MOV rd,[rs+imm3s]".b" is (op2_7=0x48 & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	if (tmp<0x10000) goto <ramX>;
+	rd = sext(*:1 tmp); goto inst_next;
+	<ramX> rd = sext(*[ram]:1 tmp);
+}
+
+#92
+:MOV rd,[rs+imm3s]".b" is (op2_7=0x49 & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	if (tmp<0x10000) goto <ramX>;
+	rd = zext(*:1 tmp); goto inst_next;
+	<ramX> rd = zext(*[ram]:1 tmp);
+}
+
+#94
+:MOV rd,[rs+imm3s]".w" is (op2_7=0x4a & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	if (tmp<0x10000) goto <ramX>;
+	rd = zext(*:2 tmp);	goto inst_next;
+	<ramX> rd = zext(*[ram]:2 tmp);
+}
+
+#96
+:MOV rd,[rs+imm3s]".w" is (op2_7=0x4b & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	if (tmp<0x10000) goto <ramX>;
+	rd = sext(*:2 tmp);	goto inst_next;
+	<ramX> rd = sext(*[ram]:2 tmp);
+}
+
+#98
+:MOV rd,[rs+imm3s]".d" is (op2_7=0x4c & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	if (tmp<0x10000) goto <ramX>;
+	rd = *:4 tmp; goto inst_next;
+	<ramX> rd = *[ram]:4 tmp;
+}
+
+#9A
+:MOV [rs+imm3s]".b",rd is (op2_7=0x4d & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	*[ram]:1 (tmp) = rd:1;	
+}
+
+#9C
+:MOV [rs+imm3s]".w",rd is (op2_7=0x4e & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	*[ram]:2 (tmp) = rd:2;
+}
+
+#9E
+:MOV [rs+imm3s]".d",rd is (op2_7=0x4f & rd & rs & imm3s) {
+	tmp:4 = rs+imm3s;
+	*[ram]:4 (tmp) = rd;
+}
+
+#A0
+:NEG rd,rs is (op2_7=0x50 & rd & rs & rt=0) {
+	rd = ~rs;
+}
+
+#A2
+:MOV rd,rs is (op2_7=0x51 & rd & rs & rt=0) {
+	rd = rs;
+}
+
+#A4
+:NEG rd is op2_7=0x52 & rd & rs & rt=0 {
+	rd = -rs;
+}
+
+#A6
+:CMP rd,rs is op2_7=0x53 & rd & rs {
+	setSubFlags(rd, rs);
+	local tmp = rd - rs;
+	setResultFlags(tmp);
+}
+
+#A8
+:CALL rs is op2_7=0x54 & rs {
+	lr = inst_next;
+#	if ((rs>>30)==1) goto <srom>;
+#		call [RelAddr32];
+#		goto inst_next;
+#	<srom>
+		call [rs];
+}
+
+#AA
+:"ASR" rd,rs,rt is op2_7=0x55 & rd & rs & rt {
+	rd = rs >> rt;	
+}
+
+#AC
+:"LSR" rd,rs,rt is op2_7=0x56 & rd & rs & rt {
+	rd = rs >> rt;	
+}
+
+#AE
+:LSL rd,rs,rt is op2_7=0x57 & rd & rs & rt {
+	rd = rs << rt;	
+}
+
+#B0 B2 B4 B6
+:MUL rd,rs is (op2_7=0x58 | op2_7=0x59 | op2_7=0x5a | op2_7=0x5b) & rd & rs & rt=0 {
+	tmp:8 = zext(rd) * zext(rs);
+	h00 = tmp(0);
+	h01 = tmp(4);
+}
+
+#B8 BA BC BE
+:DIV rd,rs is (op2_7=0x5c | op2_7=0x5d | op2_7=0x5e | op2_7=0x5f) & rd & rs & rt=0 {
+	h02 = rd / rs;
+	h03 = rd % rs;
+}
+
+#C8
+:MOVH rd,rh is op2_7=0x64 & rd & rh {
+	rd = rh;
+}
+
+#CA
+:MOVH rh,rd is op2_7=0x65 & rd & rh {
+	rh = rd;	
+}
+
+#Dx
+:J^cc RelAddr is (op1_4=0xd & cc); RelAddr {
+	if(cc) goto RelAddr;
+}
+
+#D5
+:J^cc RelAddr is (op1_8=0xd5 & cc); RelAddr {
+	goto RelAddr;
+}
+
+#DD
+:J^cc RelAddr is (op1_8=0xdd & cc); RelAddr {
+}
+
+#E0 E3
+:RET is op1_8=0xe0 | op1_8=0xe3  {
+	return [*[rom]:1 lr];
+}
+
+#E1
+:RET is op1_8=0xe1 {
+	return [*[rom]:1 r0];
+}
+
+#>=E2
+:??? is op1_8=0xe2 | (op1_8>=0xe4 & op1_8<=0xef) {
+}
+
+#F0
+:STC is op1_8=0xf0 {
+	$(C_flag) = 1;
+}
+
+#F1
+:CLC is op1_8=0xf1 {
+	$(C_flag) = 0;
+}
+
+#F2
+:STZ is op1_8=0xf2 {
+	$(Z_flag) = 1;
+}
+
+#F3
+:CLZ is op1_8=0xf3 {
+	$(Z_flag) = 0;
+}
+
+#F4
+:STN is op1_8=0xf4 {
+	$(N_flag) = 1;
+}
+
+#F5
+:CLN is op1_8=0xf5 {
+	$(N_flag) = 0;
+}
+
+#F6
+:STV is op1_8=0xf6 {
+	$(V_flag) = 1;
+}
+
+#F7
+:CLV is op1_8=0xf7 {
+	$(V_flag) = 0;
+}
+
+#F8
+:DII is op1_8=0xf8 {
+	$(I_flag) = 1;
+}
+
+#F9
+:ENI is op1_8=0xf9 {
+	$(I_flag) = 0;
+}
+
+#FC
+:NOP is op1_8=0xfc {
+	
+}
+
+#FE
+:WAI is op1_8=0xfe {
+}
+
+#FF
+:HLT is op1_8=0xff {
+}
+
+##F9
+#:??? is op1_8=0xf9 {
+#}
+#
+##FE
+#:??? is op1_8=0xfe {
+#}
+#:JP (IX)  is op0_8=0xdd & IX; op0_8=0xe9 {
+#	goto [IX];
+#}
+#
+#:JP (IY)  is op0_8=0xfd & IY; op0_8=0xe9 {
+#	goto [IY];
+#}
+#
+#:CALL Addr16  is op0_8=0xcd; Addr16 {
+#    push16(&:2 inst_next);
+#	call Addr16;
+#}
+#
+#:CALL cc,Addr16  is op6_2=0x3 & cc & bits0_3=0x4; Addr16 {
+#	if (!cc) goto inst_next;
+#    push16(&:2 inst_next);
+#	call Addr16;
+#}
+#
+#:RET  is op0_8=0xc9 {
+#	pop16(PC);
+#	ptr:2 = zext(PC);
+#	return [ptr];
+#}
+#
+#:RET cc  is op6_2=0x3 & cc & bits0_3=0x0 {
+#	if (!cc) goto inst_next;
+#	pop16(PC);
+#	ptr:2 = zext(PC);
+#	return [ptr];
+#}	

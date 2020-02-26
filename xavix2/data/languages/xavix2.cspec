@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/compiler_spec.rxg -->
+
+<compiler_spec>
+  <data_organization>
+	<pointer_size value="4" />
+  </data_organization>
+ 	<global>
+    	<range space="ram"/>
+    	<range space="rom"/>
+    	<range space="io"/>
+	</global>
+  <stackpointer register="sp" space="ram"/>
+  <returnaddress>
+      <register name="lr"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r2"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r5"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r1"/>
+        <register name="r2"/>
+        <register name="r3"/>
+        <register name="r4"/>
+        <register name="sp"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xfffffc00" last="0xffffffff"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+    <prototype name="__ret3" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r2"/>
+        </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r4"/>
+        </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r4" piece2="r3"/>
+      </pentry>
+      </output>
+      <unaffected>
+        <register name="r0"/>
+        <register name="r1"/>
+        <register name="r2"/>
+        <register name="r5"/>
+        <register name="sp"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xfffffc00" last="0xffffffff"/>
+      </localrange>
+    </prototype>
+    <prototype name="__fastcall" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r2"/>
+        </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r4" piece2="r0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r1"/>
+        <register name="r2"/>
+        <register name="r3"/>
+        <register name="r5"/>
+        <register name="sp"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xfffffc00" last="0xffffffff"/>
+      </localrange>
+    </prototype>
+    <prototype name="__thiscall" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="r5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r2"/>
+        </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r4" piece2="r0"/>
+      </pentry>
+      </output>
+      <unaffected>
+        <register name="r1"/>
+        <register name="r2"/>
+        <register name="r5"/>
+        <register name="sp"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0xfffffc00" last="0xffffffff"/>
+      </localrange>
+    </prototype>
+</compiler_spec>

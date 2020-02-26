@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/processor_spec.rxg -->
+
+<processor_spec>
+	<data_space space="ram"/>
+	<default_symbols>
+		<symbol name="RESET" address="rom:0x00000000" entry="true" type="code"/>
+		<symbol name="TRAP"  address="rom:0x00000004" entry="true" type="code"/>
+		<symbol name="VEC2"  address="rom:0x00000008" entry="true" type="code"/>
+		<symbol name="VEC3"  address="rom:0x0000000c" entry="true" type="code"/>
+		<symbol name="INT"   address="rom:0x00000010" entry="true" type="code"/>
+	</default_symbols>
+</processor_spec>
